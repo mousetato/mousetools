@@ -1,0 +1,16 @@
+{
+  "name": "我的定制计时器 PWA",
+  "short_name": "定制计时器",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#0f3460",
+  "description": "具有20分钟计数和咖啡钟功能的定制计时器。",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
