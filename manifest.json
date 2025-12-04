@@ -1,5 +1,5 @@
 {
-  "name": "我的定制计时器",
+  "name": "定制计时器",
   "short_name": "定制计时器",
   "start_url": "./index.html",
   "display": "standalone",
