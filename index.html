@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-    <title>计时器</title>
+    <title>🐀计时器</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <style>
@@ -185,8 +185,8 @@
     <div class="app-container">
         
         <div class="tabs">
-            <button class="tab-button active" data-tab="work">Work Timer</button>
-            <button class="tab-button" data-tab="coffee">Coffee Timer</button>
+            <button class="tab-button active" data-tab="work">Work Timer (正计时)</button>
+            <button class="tab-button" data-tab="coffee">Coffee Timer (咖啡钟)</button>
         </div>
         
         <div id="work" class="tab-content active">
@@ -225,7 +225,7 @@
     
     <script>
         // =======================================================
-        // 1. Tab 切换逻辑
+        // 1. Tab 切换逻辑 (保持不变)
         // =======================================================
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -240,9 +240,9 @@
         function switchTab(targetTabId) {
             // 暂停当前的计时器，以防后台运行
             if (targetTabId === 'coffee' && isStopwatchRunning) {
-                toggleStopwatch(); 
+                toggleStopwatch(); // 暂停工作计时
             } else if (targetTabId === 'work' && isCoffeeRunning) {
-                toggleCoffeeTimer(); 
+                toggleCoffeeTimer(); // 暂停咖啡钟
             }
 
             // 更新按钮样式
@@ -259,24 +259,192 @@
         }
 
         // =======================================================
-        // 2. 计时器核心逻辑 (与 V4.0 保持一致)
+        // 2. 计时器核心逻辑 (已修正误差)
         // =======================================================
         
         // --- Work Timer ---
-        let totalSeconds = 0; let stopwatchId = null; let isStopwatchRunning = false; const INTERVAL_DURATION = 1200; 
-        function formatStopwatchTime(sec) { const h = Math.floor(sec / 3600); const m = Math.floor((sec % 3600) / 60); const s = sec % 60; return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; }
-        function updateStopwatchDisplay() { const timeDisplay = document.getElementById('stopwatch-time'); const counterDisplay = document.getElementById('interval-counter'); timeDisplay.textContent = formatStopwatchTime(totalSeconds); const counter = Math.floor(totalSeconds / INTERVAL_DURATION); counterDisplay.textContent = `计数: ${counter}`; }
-        function toggleStopwatch() { const btn = document.getElementById('stopwatchBtn'); if (isStopwatchRunning) { clearInterval(stopwatchId); isStopwatchRunning = false; btn.textContent = "继续"; btn.className = "btn-start"; } else { isStopwatchRunning = true; btn.textContent = "暂停"; btn.className = "btn-pause"; stopwatchId = setInterval(() => { totalSeconds++; updateStopwatchDisplay(); }, 1000); } }
-        function resetStopwatch() { clearInterval(stopwatchId); isStopwatchRunning = false; totalSeconds = 0; updateStopwatchDisplay(); const btn = document.getElementById('stopwatchBtn'); btn.textContent = "开始"; btn.className = "btn-start"; }
+        let stopwatchId = null; 
+        let isStopwatchRunning = false;
+        let stopwatchStartTime = 0; // 记录开始时间 (毫秒)
+        let stopwatchOffset = 0;    // 记录暂停时的累计时间 (毫秒)
+        const INTERVAL_DURATION = 1200; // 20 分钟 = 1200 秒
         
+        function formatStopwatchTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateStopwatchDisplay() {
+            // 核心逻辑：计算总流逝时间
+            let totalTimeMs = stopwatchOffset;
+            if (isStopwatchRunning) {
+                 totalTimeMs += Date.now() - stopwatchStartTime;
+            }
+
+            const totalSeconds = Math.floor(totalTimeMs / 1000);
+            const timeDisplay = document.getElementById('stopwatch-time');
+            const counterDisplay = document.getElementById('interval-counter');
+
+            timeDisplay.textContent = formatStopwatchTime(totalTimeMs);
+            
+            const counter = Math.floor(totalSeconds / INTERVAL_DURATION);
+            counterDisplay.textContent = `计数: ${counter}`;
+        }
+
+        function toggleStopwatch() {
+            const btn = document.getElementById('stopwatchBtn');
+            if (isStopwatchRunning) {
+                // 暂停: 累加当前运行时间到 offset
+                clearInterval(stopwatchId);
+                isStopwatchRunning = false;
+                stopwatchOffset += Date.now() - stopwatchStartTime; // 关键：保存流逝时间
+                btn.textContent = "继续";
+                btn.className = "btn-start";
+            } else {
+                // 开始/继续
+                stopwatchStartTime = Date.now(); // 关键：记录新的开始时间
+                isStopwatchRunning = true;
+                btn.textContent = "暂停";
+                btn.className = "btn-pause";
+                
+                stopwatchId = setInterval(() => {
+                    updateStopwatchDisplay(); // 每次更新时都基于 Date.now() 重新计算时间
+                }, 1000);
+            }
+            updateStopwatchDisplay(); // 立即更新显示
+        }
+
+        function resetStopwatch() {
+            clearInterval(stopwatchId);
+            isStopwatchRunning = false;
+            stopwatchOffset = 0; // 重置累计时间
+            stopwatchStartTime = 0;
+            updateStopwatchDisplay();
+            
+            const btn = document.getElementById('stopwatchBtn');
+            btn.textContent = "开始";
+            btn.className = "btn-start";
+        }
+
         // --- Coffee Timer ---
-        let coffeeTimeLeft = 150; let coffeeTimerId = null; let isCoffeeRunning = false; let initialCoffeeTime = 150;
-        function formatCountdownTime(sec) { const m = Math.floor(sec / 60); const s = sec % 60; return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; }
-        function updateCoffeeDisplay() { document.getElementById('coffee-timer-display').textContent = formatCountdownTime(coffeeTimeLeft); }
-        function setCoffeeTime() { const inputElement = document.getElementById('coffee-input'); const inputSec = parseInt(inputElement.value); if (!isNaN(inputSec) && inputSec > 0) { clearInterval(coffeeTimerId); isCoffeeRunning = false; initialCoffeeTime = inputSec; coffeeTimeLeft = initialCoffeeTime; updateCoffeeDisplay(); document.getElementById('coffeeMessage').textContent = ""; const btn = document.getElementById('coffeeBtn'); btn.textContent = "开始"; btn.className = "btn-start"; } else { alert("请输入有效的秒数！"); } }
-        function resetCoffeeTimer() { clearInterval(coffeeTimerId); isCoffeeRunning = false; coffeeTimeLeft = initialCoffeeTime; const btn = document.getElementById('coffeeBtn'); btn.textContent = "开始"; btn.className = "btn-start"; document.getElementById('coffeeMessage').textContent = ""; updateCoffeeDisplay(); }
-        function toggleCoffeeTimer() { const btn = document.getElementById('coffeeBtn'); if (isCoffeeRunning) { clearInterval(coffeeTimerId); isCoffeeRunning = false; btn.textContent = "继续"; btn.className = "btn-start"; } else { if (coffeeTimeLeft <= 0) { coffeeTimeLeft = initialCoffeeTime; updateCoffeeDisplay(); } isCoffeeRunning = true; btn.textContent = "暂停"; btn.className = "btn-pause"; document.getElementById('coffeeMessage').textContent = ""; coffeeTimerId = setInterval(() => { if (coffeeTimeLeft > 0) { coffeeTimeLeft--; updateCoffeeDisplay(); } else { clearInterval(coffeeTimerId); isCoffeeRunning = false; btn.textContent = "完成"; btn.className = "btn-reset"; new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3').play(); document.getElementById('coffeeMessage').textContent = "☕ 咖啡时间到！请享用。"; } }, 1000); } }
+        let coffeeTimerId = null;
+        let isCoffeeRunning = false;
+        let initialCoffeeTime = 150; // 初始设定时间 (秒)
+        let coffeeTimeTotalMs = 0;  // 设定时间总毫秒数 (用于计算百分比)
+        let coffeeStartTime = 0; // 计时开始时间 (毫秒)
+        let coffeeTimePausedOffset = 0; // 暂停时的流逝时间 (毫秒)
+
+        function formatCountdownTime(ms) {
+            const totalSeconds = Math.ceil(ms / 1000); // 向上取整，确保倒计时到0
+            if (totalSeconds < 0) return "00:00";
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
         
+        function updateCoffeeDisplay() {
+            const btn = document.getElementById('coffeeBtn');
+            const messageElement = document.getElementById('coffeeMessage');
+            
+            let timeElapsedMs = coffeeTimePausedOffset;
+            if (isCoffeeRunning) {
+                timeElapsedMs += Date.now() - coffeeStartTime;
+            }
+
+            let coffeeTimeRemainingMs = coffeeTimeTotalMs - timeElapsedMs;
+            
+            if (coffeeTimeRemainingMs <= 0) {
+                // 计时结束
+                if (isCoffeeRunning) { // 仅在刚刚结束时执行一次
+                    clearInterval(coffeeTimerId);
+                    isCoffeeRunning = false;
+                    btn.textContent = "完成";
+                    btn.className = "btn-reset";
+                    
+                    new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3').play();
+                    messageElement.textContent = "☕ 咖啡时间到！请享用。";
+                }
+                document.getElementById('coffee-timer-display').textContent = "00:00";
+                return;
+            } 
+            
+            // 更新显示时间
+            document.getElementById('coffee-timer-display').textContent = formatCountdownTime(coffeeTimeRemainingMs);
+            
+            // 确保计时器状态正确
+            if (isCoffeeRunning && btn.textContent !== "暂停") {
+                btn.textContent = "暂停";
+                btn.className = "btn-pause";
+            }
+        }
+
+        function setCoffeeTime() {
+            const inputElement = document.getElementById('coffee-input');
+            const inputSec = parseInt(inputElement.value);
+            
+            if (!isNaN(inputSec) && inputSec > 0) {
+                clearInterval(coffeeTimerId);
+                isCoffeeRunning = false;
+                
+                initialCoffeeTime = inputSec; // 存储新的初始值 (秒)
+                coffeeTimeTotalMs = initialCoffeeTime * 1000; // 总毫秒数
+                coffeeTimePausedOffset = 0;
+                
+                // 更新UI
+                updateCoffeeDisplay();
+                document.getElementById('coffeeMessage').textContent = "";
+                const btn = document.getElementById('coffeeBtn');
+                btn.textContent = "开始";
+                btn.className = "btn-start";
+            } else {
+                alert("请输入有效的秒数！");
+            }
+        }
+
+        function resetCoffeeTimer() {
+            clearInterval(coffeeTimerId);
+            isCoffeeRunning = false;
+            coffeeTimeTotalMs = initialCoffeeTime * 1000; // 重置总毫秒数
+            coffeeTimePausedOffset = 0;
+            coffeeStartTime = 0;
+
+            const btn = document.getElementById('coffeeBtn');
+            btn.textContent = "开始";
+            btn.className = "btn-start"; 
+            
+            document.getElementById('coffeeMessage').textContent = ""; 
+            updateCoffeeDisplay(); 
+        }
+
+        function toggleCoffeeTimer() {
+            const btn = document.getElementById('coffeeBtn');
+            
+            if (isCoffeeRunning) {
+                // 暂停: 累加流逝时间到 offset
+                clearInterval(coffeeTimerId);
+                isCoffeeRunning = false;
+                coffeeTimePausedOffset += Date.now() - coffeeStartTime; // 关键：记录已流逝的时间
+                btn.textContent = "继续";
+                btn.className = "btn-start";
+            } else {
+                // 开始/继续
+                if (coffeeTimeTotalMs <= 0 || coffeeTimeTotalMs === undefined) {
+                    setCoffeeTime(); // 如果总时间未设置或已归零，则重置为初始设定值
+                }
+                
+                coffeeStartTime = Date.now(); // 关键：记录新的开始时间
+                isCoffeeRunning = true;
+                
+                document.getElementById('coffeeMessage').textContent = "";
+                
+                coffeeTimerId = setInterval(updateCoffeeDisplay, 100); // 提高更新频率（100ms）以减少显示跳动
+            }
+            updateCoffeeDisplay();
+        }
+
         // 初始化显示
         updateStopwatchDisplay();
         updateCoffeeDisplay();
