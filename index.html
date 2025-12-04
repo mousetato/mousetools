@@ -4,106 +4,291 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
     <title>计时器</title>
-    
     <link rel="manifest" href="manifest.json">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        /* [样式代码保持不变，为节省篇幅此处省略] */
+        /* ======================================================= */
+        /* 1. 基础样式与居中布局 - 白底与圆润字体 */
+        /* ======================================================= */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1a1a2e;
-            color: #ffffff;
+            font-family: 'Quicksand', 'Helvetica Neue', 'Arial', sans-serif; /* 圆润字体 */
+            background-color: #f0f2f5; /* 极浅灰白底 */
+            color: #333333; /* 文字颜色改为深色 */
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            align-items: center; 
+            padding: 20px 0; 
         }
-        .timer-section {
-            width: 90%;
-            max-width: 450px;
-            margin-bottom: 30px;
-            padding: 20px;
-            border-radius: 15px;
-            background-color: #0f3460;
+
+        .app-container {
+            width: 95%;
+            max-width: 500px;
+            background-color: #ffffff; /* 纯白卡片 */
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* 柔和的阴影 */
+            padding-bottom: 20px;
+        }
+
+        /* ======================================================= */
+        /* 2. Tab 切换样式 */
+        /* ======================================================= */
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex-grow: 1;
+            padding: 15px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            color: #666; /* 非激活 Tab 颜色 */
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: #E91E63; /* 激活 Tab 颜色（亮眼的粉色） */
+            border-bottom: 3px solid #E91E63;
+        }
+
+        .tab-content {
+            padding: 0 20px;
             text-align: center;
         }
-        h2 { margin-bottom: 15px; font-size: 1.5rem; color: #ffcc00; }
-        .display-time { font-size: 4rem; font-weight: bold; font-variant-numeric: tabular-nums; margin-bottom: 10px; color: #b8c2ff; }
-        .counter-display { font-size: 1.8rem; margin-bottom: 20px; color: #90ee90; }
-        #coffeeMessage { font-size: 1.5rem; color: #ff5252; font-weight: bold; height: 30px; margin-top: 10px; }
-        .controls { display: flex; justify-content: center; gap: 10px; }
-        button { padding: 12px 25px; font-size: 1.1rem; border: none; border-radius: 50px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
+
+        /* ======================================================= */
+        /* 3. 计时器通用样式 */
+        /* ======================================================= */
+        h2 {
+            margin-bottom: 15px;
+            color: #333333; 
+            padding-bottom: 15px;
+        }
+
+        .display-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 3.5rem; 
+            font-weight: 700;
+            color: #4CAF50;
+            text-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        
+        #interval-counter {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        /* 按钮通用样式 (调整为浅色背景下的颜色) */
+        .controls {
+            display: flex; justify-content: center; gap: 10px; margin-top: 20px; margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 25px; font-size: 1.1rem; border-radius: 50px; border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 柔和阴影 */
+            transition: all 0.2s ease-in-out; cursor: pointer;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); }
+        button:active { transform: scale(0.95); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
         .btn-start { background-color: #00e676; color: #000; }
         .btn-pause { background-color: #ff9800; color: #fff; }
         .btn-reset { background-color: #f44336; color: #fff; }
         .btn-set { background-color: #2196f3; color: #fff; }
-        input { padding: 10px; margin-right: 10px; border: none; border-radius: 5px; width: 80px; text-align: center; }
+        input { padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 5px; width: 80px; text-align: center; color: #000;}
+
+        /* ======================================================= */
+        /* 4. 咖啡杯形状 (圆形瓷杯) */
+        /* ======================================================= */
+        .coffee-cup-container {
+            position: relative;
+            width: 250px;
+            height: 180px;
+            margin: 30px auto 10px auto;
+        }
+        
+        .cup-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 120px;
+            
+            /* 瓷白色主体，圆润底部 */
+            background-color: #F8F8FF; /* 瓷白色 */
+            border: 1px solid #E0E0E0;
+            border-radius: 0 0 30px 30px; 
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05); /* 柔和内阴影，增加立体感 */
+        }
+
+        /* 杯沿 (Rim) */
+        .cup-body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: #E0E0E0; /* 浅灰色杯沿 */
+            border-radius: 10px 10px 0 0;
+        }
+
+        /* 杯柄 (Handle) */
+        .cup-body::after {
+            content: '';
+            position: absolute;
+            right: -30px;
+            top: 20px;
+            width: 50px;
+            height: 80px;
+            border: 10px solid #E0E0E0; /* 瓷白色把手 */
+            border-radius: 0 50px 50px 0;
+            border-left: none;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 咖啡液 (Liquid) */
+        .coffee-liquid {
+            position: absolute;
+            top: 5px; 
+            width: 100%;
+            height: 100%;
+            background-color: #4E342E; /* 深棕色 */
+            border-radius: 0 0 30px 30px;
+            z-index: 10;
+        }
+        
+        /* 调整计时器和消息的定位 */
+        #coffee-timer-display {
+            position: absolute; width: 100%; text-align: center; color: #fff; z-index: 20; 
+            font-size: 2.5rem; left: 50%; transform: translateX(-50%);
+            top: 35px; 
+        }
+        #coffeeMessage {
+            position: absolute; width: 100%; text-align: center; color: #FFCDD2; z-index: 20;
+            font-size: 1rem; left: 50%; transform: translateX(-50%);
+            top: 85px;
+        }
     </style>
 </head>
 <body>
-
-    <div class="timer-section" id="stopwatch-container">
-        <h2>工作计时 (正计时)</h2>
-        <div class="display-time" id="stopwatch-time">00:00:00</div>
-        <div class="counter-display" id="interval-counter">计数: 0</div>
-        <div class="controls">
-            <button class="btn-start" onclick="toggleStopwatch()" id="stopwatchBtn">开始</button>
-            <button class="btn-reset" onclick="resetStopwatch()">重置</button>
-        </div>
-    </div>
-
-    <div class="timer-section" id="coffee-timer-container">
-        <h2>咖啡钟 (倒计时)</h2>
-        <div style="margin-bottom: 15px;">
-            <input type="number" id="coffee-input" value="150" placeholder="秒数 (默认 150)">
-            <button class="btn-set" onclick="setCoffeeTime()">设置时间</button>
-        </div>
-        <div class="display-time" id="coffee-timer-display">02:30</div>
-        <div id="coffeeMessage"></div>
-        <div class="controls">
-            <button class="btn-start" onclick="toggleCoffeeTimer()" id="coffeeBtn">开始</button>
-            <button class="btn-reset" onclick="resetCoffeeTimer()">重置</button>
-        </div>
-    </div>
-
-    <script>
-        // [JavaScript 函数代码保持不变，为节省篇幅此处省略]
-        // 确保你的所有 JS 函数都在这里
-
-        // --- 所有 JS 函数 (toggleStopwatch, resetStopwatch, toggleCoffeeTimer, etc.) 放在此处 ---
+    <div class="app-container">
         
+        <div class="tabs">
+            <button class="tab-button active" data-tab="work">Work Timer</button>
+            <button class="tab-button" data-tab="coffee">Coffee Timer</button>
+        </div>
+        
+        <div id="work" class="tab-content active">
+            <h2>工作计时</h2>
+            <div class="display-time" id="stopwatch-time">00:00:00</div>
+            <div id="interval-counter">计数: 0</div>
+            <div class="controls">
+                <button class="btn-start" onclick="toggleStopwatch()" id="stopwatchBtn">开始</button>
+                <button class="btn-reset" onclick="resetStopwatch()">重置</button>
+            </div>
+        </div>
+        
+        <div id="coffee" class="tab-content" style="display: none;">
+            <h2>咖啡钟</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <input type="number" id="coffee-input" value="150" placeholder="秒数 (默认 150)">
+                <button class="btn-set" onclick="setCoffeeTime()">设置时间</button>
+            </div>
+            
+            <div class="coffee-cup-container">
+                <div class="cup-body">
+                    <div class="coffee-liquid">
+                        <div class="display-time" id="coffee-timer-display">02:30</div>
+                        <div id="coffeeMessage"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn-start" onclick="toggleCoffeeTimer()" id="coffeeBtn">开始</button>
+                <button class="btn-reset" onclick="resetCoffeeTimer()">重置</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // =======================================================
+        // 1. Tab 切换逻辑
+        // =======================================================
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTabId = button.dataset.tab;
+                switchTab(targetTabId);
+            });
+        });
+
+        function switchTab(targetTabId) {
+            // 暂停当前的计时器，以防后台运行
+            if (targetTabId === 'coffee' && isStopwatchRunning) {
+                toggleStopwatch(); 
+            } else if (targetTabId === 'work' && isCoffeeRunning) {
+                toggleCoffeeTimer(); 
+            }
+
+            // 更新按钮样式
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-button[data-tab="${targetTabId}"]`).classList.add('active');
+
+            // 切换内容显示
+            tabContents.forEach(content => {
+                content.style.display = 'none';
+                if (content.id === targetTabId) {
+                    content.style.display = 'block';
+                }
+            });
+        }
+
+        // =======================================================
+        // 2. 计时器核心逻辑 (与 V4.0 保持一致)
+        // =======================================================
+        
+        // --- Work Timer ---
         let totalSeconds = 0; let stopwatchId = null; let isStopwatchRunning = false; const INTERVAL_DURATION = 1200; 
         function formatStopwatchTime(sec) { const h = Math.floor(sec / 3600); const m = Math.floor((sec % 3600) / 60); const s = sec % 60; return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; }
         function updateStopwatchDisplay() { const timeDisplay = document.getElementById('stopwatch-time'); const counterDisplay = document.getElementById('interval-counter'); timeDisplay.textContent = formatStopwatchTime(totalSeconds); const counter = Math.floor(totalSeconds / INTERVAL_DURATION); counterDisplay.textContent = `计数: ${counter}`; }
         function toggleStopwatch() { const btn = document.getElementById('stopwatchBtn'); if (isStopwatchRunning) { clearInterval(stopwatchId); isStopwatchRunning = false; btn.textContent = "继续"; btn.className = "btn-start"; } else { isStopwatchRunning = true; btn.textContent = "暂停"; btn.className = "btn-pause"; stopwatchId = setInterval(() => { totalSeconds++; updateStopwatchDisplay(); }, 1000); } }
         function resetStopwatch() { clearInterval(stopwatchId); isStopwatchRunning = false; totalSeconds = 0; updateStopwatchDisplay(); const btn = document.getElementById('stopwatchBtn'); btn.textContent = "开始"; btn.className = "btn-start"; }
         
+        // --- Coffee Timer ---
         let coffeeTimeLeft = 150; let coffeeTimerId = null; let isCoffeeRunning = false; let initialCoffeeTime = 150;
         function formatCountdownTime(sec) { const m = Math.floor(sec / 60); const s = sec % 60; return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; }
         function updateCoffeeDisplay() { document.getElementById('coffee-timer-display').textContent = formatCountdownTime(coffeeTimeLeft); }
         function setCoffeeTime() { const inputElement = document.getElementById('coffee-input'); const inputSec = parseInt(inputElement.value); if (!isNaN(inputSec) && inputSec > 0) { clearInterval(coffeeTimerId); isCoffeeRunning = false; initialCoffeeTime = inputSec; coffeeTimeLeft = initialCoffeeTime; updateCoffeeDisplay(); document.getElementById('coffeeMessage').textContent = ""; const btn = document.getElementById('coffeeBtn'); btn.textContent = "开始"; btn.className = "btn-start"; } else { alert("请输入有效的秒数！"); } }
         function resetCoffeeTimer() { clearInterval(coffeeTimerId); isCoffeeRunning = false; coffeeTimeLeft = initialCoffeeTime; const btn = document.getElementById('coffeeBtn'); btn.textContent = "开始"; btn.className = "btn-start"; document.getElementById('coffeeMessage').textContent = ""; updateCoffeeDisplay(); }
-        function toggleCoffeeTimer() { const btn = document.getElementById('coffeeBtn'); if (isCoffeeRunning) { clearInterval(coffeeTimerId); isCoffeeRunning = false; btn.textContent = "继续"; btn.className = "btn-start"; } else { if (coffeeTimeLeft <= 0) { coffeeTimeLeft = initialCoffeeTime; updateCoffeeDisplay(); } isCoffeeRunning = true; btn.textContent = "暂停"; btn.className = "btn-pause"; document.getElementById('coffeeMessage').textContent = ""; coffeeTimerId = setInterval(() => { if (coffeeTimeLeft > 0) { coffeeTimeLeft--; updateCoffeeDisplay(); } else { clearInterval(coffeeTimerId); isCoffeeRunning = false; btn.textContent = "完成"; btn.className = "btn-reset"; new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3').play(); document.getElementById('coffeeMessage').textContent = "☕ 咖啡时间到！请享用。"; } }, 900); } }
+        function toggleCoffeeTimer() { const btn = document.getElementById('coffeeBtn'); if (isCoffeeRunning) { clearInterval(coffeeTimerId); isCoffeeRunning = false; btn.textContent = "继续"; btn.className = "btn-start"; } else { if (coffeeTimeLeft <= 0) { coffeeTimeLeft = initialCoffeeTime; updateCoffeeDisplay(); } isCoffeeRunning = true; btn.textContent = "暂停"; btn.className = "btn-pause"; document.getElementById('coffeeMessage').textContent = ""; coffeeTimerId = setInterval(() => { if (coffeeTimeLeft > 0) { coffeeTimeLeft--; updateCoffeeDisplay(); } else { clearInterval(coffeeTimerId); isCoffeeRunning = false; btn.textContent = "完成"; btn.className = "btn-reset"; new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-07.mp3').play(); document.getElementById('coffeeMessage').textContent = "☕ 咖啡时间到！请享用。"; } }, 1000); } }
         
+        // 初始化显示
         updateStopwatchDisplay();
         updateCoffeeDisplay();
-
-
-        // PWA: Service Worker 注册脚本 (必须放在 JS 代码的最后)
+    
+        // PWA: Service Worker 注册脚本
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker registration failed: ', error);
-                    });
+                    .then(registration => { console.log('ServiceWorker registration successful with scope: ', registration.scope); })
+                    .catch(error => { console.log('ServiceWorker registration failed: ', error); });
             });
         }
     </script>
-
 </body>
 </html>
